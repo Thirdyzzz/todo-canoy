@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+        crossorigin="anonymous">
+    
+    <!-- SweetAlert CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <!-- SweetAlert JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f9f9f9; /* Light grey background */
+        }
+        header {
+            background-color: #333; /* Dark grey background */
+            color: #ffffff;
+            border-bottom: 1px solid #ddd;
+        }
+        header .container {
+            max-width: 1200px;
+        }
+        header h1 {
+            font-size: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        header h1 input[type="checkbox"] {
+            margin-right: 10px;
+            accent-color: #cc0000; /* Red color for checkbox */
+            transform: scale(1.2); /* Make the checkbox slightly larger */
+        }
+        .btn-dark {
+            background-color: #cc0000; /* Red color for buttons */
+            border-color: #cc0000;
+        }
+        .btn-dark:hover {
+            background-color: #b30000; /* Darker red on hover */
+            border-color: #b30000;
+        }
+        .list-group-item {
+            border: 1px solid #ddd; /* Light border for items */
+            border-radius: 8px; /* Rounded corners */
+            background-color: #fff; /* White background for items */
+        }
+        .list-group-item .btn {
+            margin: 0;
+            padding: 0.5rem;
+        }
+        .form-control-lg {
+            border-radius: 8px; /* Rounded input field */
+        }
+        .btn-block {
+            border-radius: 8px; /* Rounded button */
+        }
+        .alert {
+            border-radius: 8px; /* Rounded alert */
+        }
+        .container {
+            max-width: 800px;
+        }
+        h2, h3 {
+            color: #333; /* Dark grey for headings */
+        }
+    </style>
+
+    <script src="app.js" defer></script>
+    <title>To Do List</title>
+</head>
+<body>
+    <!-- Header -->
+    <header class="py-4">
+        <div class="container text-center">
+            <h1 class="display-4">
+                <input type="checkbox" disabled> To Do List
+            </h1>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <h2>Add Items</h2>
+
+        <div id="lblsuccess" class="alert alert-success" style="display: none;"></div>
+
+        <form id="addForm" class="mb-4">
+            <div class="form-row">
+                <div class="col-lg-8 col-md-8 col-sm-12 mb-2">
+                    <input type="text" onkeyup="toggleButton(this, 'submit')"
+                        class="form-control form-control-lg" id="item" placeholder="Enter task" required>
+                </div>
+                <div class="col-lg-4 col-md-4 col-sm-12">
+                    <button type="submit" class="btn btn-dark btn-block btn-lg" id="submit" disabled>
+                        <i class="bi bi-plus"></i> Add Task
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <h3>Tasks</h3>
+        <ul class="list-group" id="items"></ul>
+    </div>
+
+    <script>
+        // Function to toggle the submit button based on input
+        function toggleButton(input, buttonId) {
+            const button = document.getElementById(buttonId);
+            button.disabled = input.value.trim() === '';
+        }
+
+        // Function to create a new task item with delete and edit buttons
+        function createTaskItem(taskValue) {
+            const newItem = document.createElement('li');
+            newItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+            newItem.innerHTML = `
+                <span>${taskValue}</span>
+                <div>
+                    <button class="btn btn-warning btn-sm mr-2 edit-btn">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-danger btn-sm delete-btn">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+            return newItem;
+        }
+
+        // Add event listener to the form submission
+        document.getElementById('addForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            const taskValue = document.getElementById('item').value; // Get the task value
+
+            // Show SweetAlert confirmation
+            Swal.fire({
+                title: 'Task Added!',
+                text: `You have added: "${taskValue}"`,
+                icon: 'success',
+                confirmButtonText: 'OK'
+            });
+
+            // Add the new task to the list
+            const itemsList = document.getElementById('items');
+            const newItem = createTaskItem(taskValue);
+            itemsList.appendChild(newItem);
+
+            // Clear the input field
+            document.getElementById('item').value = '';
+            toggleButton(document.getElementById('item'), 'submit'); // Reset the button state
+
+            // Attach event listeners for edit and delete buttons
+            attachItemButtons(newItem);
+        });
+
+        // Function to attach event listeners to edit and delete buttons
+        function attachItemButtons(item) {
+            const editButton = item.querySelector('.edit-btn');
+            const deleteButton = item.querySelector('.delete-btn');
+
+            // Edit button functionality
+            editButton.addEventListener('click', function() {
+                const taskText = item.querySelector('span').textContent;
+                Swal.fire({
+                    title: 'Edit Task',
+                    input: 'text',
+                    inputValue: taskText,
+                    showCancelButton: true,
+                    confirmButtonText: 'Save',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed && result.value.trim() !== '') {
+                        item.querySelector('span').textContent = result.value;
+                        Swal.fire('Saved!', 'Your task has been updated.', 'success');
+                    }
+                });
+            });
+
+            // Delete button functionality
+            deleteButton.addEventListener('click', function() {
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You won't be able to revert this!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        item.remove();
+                        Swal.fire('Deleted!', 'Your task has been deleted.', 'success');
+                    }
+                });
+            });
+        }
+
+        console.log("bye")
+    </script>
+</body>
+
+</html>
